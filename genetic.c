@@ -17,6 +17,16 @@ optimal: 1, 1, 1, 1, 0, 0
 optimal: 100p
 */
 
+typedef struct {
+    int number_of_items;
+    char** items;
+    int* items_points;
+    int* items_weights;
+    int max_capacity;
+    int optimal;
+    char* solution;
+} KnapSack;
+
 char* toBinaryString(int n) {
   int num_bits = BINARY_STRING_SIZE;
   char *string = malloc(num_bits + 1);
@@ -49,25 +59,32 @@ char** initialPhase(int n, int chrom){
     return initial_options;
 }
 
-float fitness(char* chromosome, int optimal, int* points, int n){
+float fitness(char* chromosome, KnapSack* problem){
     float res = 0;
-    for(int i = 0; i < n; i++){
+    for(int i = 0; i < problem->number_of_items; i++){
         if(chromosome[i] == 1){
-            res += points[i];
+            res += problem->items_points[i];
         }
     }
 
-    res /= optimal;
+    res /= problem->optimal;
 
     return res;
 }
 
-char** geneticAlgorithm(char** chromosomes, float mutation, int n){
-    float* generation_fitness = malloc(n * sizeof(float));
-    float crossover_chance = 0;
-    for(int i = 0; i < n; i++){
-        crossover_chance += generation_fitness[i];
+int choose_chromosome(float* generation_fitness, float chances){
+
+}
+
+char** geneticAlgorithm(char** chromosomes, float mutation, KnapSack* problem){
+    float* generation_fitness = malloc(problem->number_of_items * sizeof(float));
+    float crossover_chances = 0;
+    for(int i = 0; i < problem->number_of_items; i++){
+        float fit = fitness(chromosomes[i], problem);
+        generation_fitness[i] = fit;
+        crossover_chances += fit;
     }
+
 }
 
 int main(){

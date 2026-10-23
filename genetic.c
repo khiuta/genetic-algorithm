@@ -5,20 +5,6 @@
 #define BINARY_STRING_SIZE sizeof(int) * 8
 #define CROSSOVER_CHANCE 0.6
 
-/*
-capacity: 10
-options:
-first aid kit: 10p, 1w
-survival radio: 24p, 2w
-sleeping bag: 30p, 3w
-laptop: 36p, 4w
-tent: 40p, 5w
-portable generator: 63p, 7w
-
-optimal: 1, 1, 1, 1, 0, 0
-optimal: 100p
-*/
-
 typedef struct {
 	int number_of_items;
 	char** items;
@@ -107,7 +93,7 @@ int choose_chromosome(float* generation_fitness, float fitness_sum){
 	return i;
 }
 
-void crossover(char** next_gen, char* chr1, char* chr2, float crossover_chance, int n, int iter){
+int crossover(char** next_gen, char* chr1, char* chr2, float crossover_chance, int n, int iter){
 	float r = (float)rand() / (float)RAND_MAX;
 	// crossover point cannot be the first or last position
 	int crossover_point = r * (n-3) + 1;
@@ -115,8 +101,8 @@ void crossover(char** next_gen, char* chr1, char* chr2, float crossover_chance, 
 	char* new_chr1 = malloc((n+1) * sizeof(char));
 	char* new_chr2 = malloc((n+1) * sizeof(char));
 	if(new_chr1 == NULL || new_chr2 == NULL) return NULL;
-	strcopy(new_chr1, chr1);
-	strcopy(new_chr2, chr2);
+	strcpy(new_chr1, chr1);
+	strcpy(new_chr2, chr2);
 
 	if(r < crossover_chance){
 		for(int i = 0; i < n; i++){
@@ -131,17 +117,31 @@ void crossover(char** next_gen, char* chr1, char* chr2, float crossover_chance, 
 
 	next_gen[iter] = new_chr1;
 	next_gen[iter+1] = new_chr2;
+
+	return 0;
+}
+
+void perGeneMutation(char** chromosomes, float mutation, int n, int items){
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < items; j++){
+			float r = (float)rand() / (float)RAND_MAX;
+			if(r < mutation){
+				if(chromosomes[i][j] == '0') chromosomes[i][j] = '1';
+				else chromosomes[i][j] = '0';
+			}
+		}
+	}
 }
 
 char* geneticAlgorithm(char** chromosomes, float mutation, KnapSack* problem, int n, float acceptance){
-	float* generation_fitness = malloc(problem->number_of_items * sizeof(float));
+	float* generation_fitness = malloc(n * sizeof(float));
 	float fitness_sum = 0;
 	int best_index = -1;
 
-	for(int i = 0; i < problem->number_of_items; i++){
+	for(int i = 0; i < n; i++){
 		float fit = fitness(chromosomes[i], problem);
 		generation_fitness[i] = fit;
-		if((fit / (float)problem->optimal) >= acceptance) best_index = i;
+		if(fit >= acceptance) best_index = i;
 		fitness_sum += fit;
 	}
 
@@ -155,16 +155,62 @@ char* geneticAlgorithm(char** chromosomes, float mutation, KnapSack* problem, in
 		crossover(next_gen, chromosomes[chr1], chromosomes[chr2], CROSSOVER_CHANCE, problem->number_of_items, i);
 	}
 
-	
+	perGeneMutation(next_gen, mutation, n, problem->number_of_items);
+
+	geneticAlgorithm(next_gen, mutation, problem, n, acceptance);
 }
 
 int main(){
-	int r = 0;
+		/*
+	capacity: 10
+	options:
+	first aid kit: 10p, 1w
+	survival radio: 24p, 2w
+	sleeping bag: 30p, 3w
+	laptop: 36p, 4w
+	tent: 40p, 5w
+	portable generator: 63p, 7w
 
-	for(int i = 0; i < 10; i++){
-		r = rand() % 6;
-		printf("\n%d", r);
-	}
+	optimal: 1, 1, 1, 1, 0, 0
+	optimal: 100p
+	*/
+	KnapSack* problem = malloc(sizeof(KnapSack));
+	problem->number_of_items = 6;
+	
+	problem->items = malloc(6 * sizeof(char*));
+	problem->items[0] = "first aid kit";
+	problem->items[1] = "survival radio";
+	problem->items[2] = "sleeping bag";
+	problem->items[3] = "laptop";
+	problem->items[4] = "tent";
+	problem->items[5] = "portable generator";
+
+	problem->items_points = malloc(6 * sizeof(int));
+	problem->items_points[0] = 10;
+	problem->items_points[1] = 24;
+	problem->items_points[2] = 30;
+	problem->items_points[3] = 36;
+	problem->items_points[4] = 40;
+	problem->items_points[5] = 63;
+
+	problem->items_weights = malloc(6 * sizeof(int));
+	problem->items_weights[0] = 1;
+	problem->items_weights[1] = 2;
+	problem->items_weights[2] = 3;
+	problem->items_weights[3] = 4;
+	problem->items_weights[4] = 5;
+	problem->items_weights[5] = 7;
+
+	problem->max_capacity = 10;
+	problem->optimal = 100;
+	
+	problem->solution = malloc(6 * sizeof(char));
+	problem->solution[0] = '1';
+	problem->solution[1] = '1';
+	problem->solution[2] = '1';
+	problem->solution[3] = '1';
+	problem->solution[4] = '0';
+	problem->solution[5] = '0';
 
 	return 0;
 }
